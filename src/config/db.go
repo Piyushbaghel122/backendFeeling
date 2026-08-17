@@ -26,7 +26,7 @@ func ConnectDB() {
 
 	// Set defaults if environment variables are missing
 	if dbUser == "" {
-		dbUser = "root"
+		dbUser = "postgres"
 	}
 	if dbPassword == "" {
 		dbPassword = "password123"
@@ -38,11 +38,11 @@ func ConnectDB() {
 		dbPort = "5432" // Default postgres port
 	}
 	if dbName == "" {
-		dbName = "freelancing"
+		dbName = "freelcing"
 	}
 
 	// Data Source Name for Postgres
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require", dbHost, dbUser, dbPassword, dbName, dbPort)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName, dbPort)
 
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})

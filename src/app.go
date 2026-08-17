@@ -9,7 +9,7 @@ import (
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Base directory for our static frontend
 	baseDir := "../client/out"
-	
+
 	// Determine the actual path of the requested file
 	path := filepath.Join(baseDir, r.URL.Path)
 
