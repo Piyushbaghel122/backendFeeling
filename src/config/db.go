@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"go-api/src/modules"
 )
@@ -35,17 +35,17 @@ func ConnectDB() {
 		dbHost = "localhost"
 	}
 	if dbPort == "" {
-		dbPort = "3306"
+		dbPort = "5432" // Default postgres port
 	}
 	if dbName == "" {
 		dbName = "freelancing"
 	}
 
-	// Data Source Name
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPassword, dbHost, dbPort, dbName)
+	// Data Source Name for Postgres
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require", dbHost, dbUser, dbPassword, dbName, dbPort)
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error opening database: %v\n", err)
 	}
@@ -56,5 +56,5 @@ func ConnectDB() {
 		log.Fatalf("Error during auto migration: %v\n", err)
 	}
 
-	log.Println("Connected to MySQL database successfully!")
+	log.Println("Connected to PostgreSQL database successfully!")
 }
