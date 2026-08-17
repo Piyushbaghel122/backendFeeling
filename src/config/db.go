@@ -1,16 +1,17 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"go-api/src/modules"
 )
 
-var DB *sql.DB
+var DB *gorm.DB
 
 func ConnectDB() {
 	if err := godotenv.Load(); err != nil {
@@ -44,14 +45,16 @@ func ConnectDB() {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	var err error
-	DB, err = sql.Open("mysql", dsn)
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error opening database: %v\n", err)
 	}
 
-	if err = DB.Ping(); err != nil {
-		log.Fatalf("Error connecting to database: %v\n", err)
+	// Auto migrate the User model
+	err = DB.AutoMigrate(&modules.User{})
+	if err != nil {
+		log.Fatalf("Error during auto migration: %v\n", err)
 	}
+
 	log.Println("Connected to MySQL database successfully!")
 }
-

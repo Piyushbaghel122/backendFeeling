@@ -40,8 +40,13 @@ func SignUpController(w http.ResponseWriter, r *http.Request) {
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	// TODO: Save the user to the database here!
-	// config.DB.Create(&user)
+	// Save the user to the database
+	if err := config.DB.Create(&user).Error; err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create user"})
+		return
+	}
 
 	// Create JWT token
 	tokenObj := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -78,8 +83,9 @@ func SignUpController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "User created successfully",
 		"user": map[string]interface{}{
-			"username": user.UserName,
-			"email":    user.Email,
+			"username":   user.UserName,
+			"email":      user.Email,
+			"avatar_url": user.AvatarURL,
 		},
 		"token": tokenString,
 	})
@@ -98,22 +104,19 @@ func LoginController(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user modules.User
-	// TODO: Fetch user from DB using the email
-	// result := config.DB.Where("email = ?", req.Email).First(&user)
-	// if result.Error != nil {
-	// 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-	// 	return
-	// }
+	// Fetch user from DB using the email
+	result := config.DB.Where("email = ?", req.Email).First(&user)
+	if result.Error != nil {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
 	
-	// TODO: Compare password with DB hash
-	// err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	// if err != nil {
-	// 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-	// 	return
-	// }
-
-	// Mocking user ID for now since DB query is commented out
-	user.UserId = 1 
+	// Compare password with DB hash
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	} 
 
 	// Create JWT token
 	tokenObj := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -146,6 +149,11 @@ func LoginController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Login successful",
 		"token":   tokenString,
+		"user": map[string]interface{}{
+			"username":   user.UserName,
+			"email":      user.Email,
+			"avatar_url": user.AvatarURL,
+		},
 	})
 }
 
@@ -167,17 +175,28 @@ func LogoutController(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetProfileController gets the currently logged-in user using their JWT cookie
+// GetProfileController gets the currently logged-in user using their JWT cookie or Authorization header
 func GetProfileController(w http.ResponseWriter, r *http.Request) {
+	var tokenString string
+
 	// Extract the cookie
 	cookie, err := r.Cookie("auth_token")
-	if err != nil {
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		// Fallback to Authorization header
+		authHeader := r.Header.Get("Authorization")
+		if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+			tokenString = authHeader[7:]
+		}
+	}
+
+	if tokenString == "" {
 		http.Error(w, "Unauthorized - No token found", http.StatusUnauthorized)
 		return
 	}
 
 	// Parse the JWT token
-	tokenString := cookie.Value
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
@@ -196,18 +215,22 @@ func GetProfileController(w http.ResponseWriter, r *http.Request) {
 
 	userID := claims["user_id"]
 
-	// TODO: Fetch full user details from DB using userID
-	// var user modules.User
-	// config.DB.First(&user, userID)
+	// Fetch full user details from DB using userID
+	var user modules.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Profile fetched successfully",
 		"user": map[string]interface{}{
-			"id": userID,
-			// "username": user.UserName,
-			// "email": user.Email,
+			"id":         user.UserId,
+			"username":   user.UserName,
+			"email":      user.Email,
+			"avatar_url": user.AvatarURL,
 		},
 	})
 }

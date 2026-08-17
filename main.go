@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"go-api/src"
 	"go-api/src/config"
+	"go-api/src/middleware"
 	// "go-api/src/services"
 	"go-api/src/router"
 )
@@ -26,9 +28,19 @@ func main() {
 	router.RegisterAIChatRoutes()
 	router.RegisterAuthRoutes()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	http.HandleFunc("/", src.HomeHandler)
-	log.Println("Server running on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	log.Println("Server running on port", port)
+	
+	// Wrap the default ServeMux with our CORS middleware
+	handler := middleware.CORSMiddleware(http.DefaultServeMux)
+	
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
 }
