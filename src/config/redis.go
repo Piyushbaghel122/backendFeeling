@@ -10,7 +10,7 @@ import (
 
 var RedisClient *redis.Client
 
-const redis_url = "redis-cli -u redis://default:H1OuWhD69wVLnfd1BfTTA2WU2xNMcOX2@redis-17276.c281.us-east-1-2.ec2.cloud.redislabs.com:17276"
+const redis_url = "redis://default:H1OuWhD69wVLnfd1BfTTA2WU2xNMcOX2@redis-17276.c281.us-east-1-2.ec2.cloud.redislabs.com:17276"
 
 func ConnectRedis() {
 	ctx := context.Background()
