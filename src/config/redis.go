@@ -16,7 +16,7 @@ func ConnectRedis() {
 	// Get address from environment variable, fallback to 127.0.0.1:6379
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
-		redisAddr = "127.0.0.1:6379" // Use 127.0.0.1 to avoid IPv6 issues on Windows
+		redisAddr = "redis/localhost:6379" // Use 127.0.0.1 to avoid IPv6 issues on Windows
 	}
 
 	RedisClient = redis.NewClient(&redis.Options{
