@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 
+	"go-api/src/modules"
+
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"go-api/src/modules"
 )
 
 var DB *gorm.DB
@@ -19,7 +20,7 @@ func ConnectDB() {
 	}
 
 	dbUrl := os.Getenv("DATABASE_URL")
-	
+
 	var dsn string
 	if dbUrl != "" {
 		dsn = dbUrl
