@@ -10,13 +10,15 @@ import (
 
 var RedisClient *redis.Client
 
+const redis_url = "redis-cli -u redis://default:H1OuWhD69wVLnfd1BfTTA2WU2xNMcOX2@redis-17276.c281.us-east-1-2.ec2.cloud.redislabs.com:17276"
+
 func ConnectRedis() {
 	ctx := context.Background()
 
 	// Get address from environment variable, fallback to 127.0.0.1:6379
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
-		redisAddr = "redis/localhost:6379" // Use 127.0.0.1 to avoid IPv6 issues on Windows
+		redisAddr = "127.0.0.1:6379" // Use 127.0.0.1 to avoid IPv6 issues on Windows
 	}
 
 	RedisClient = redis.NewClient(&redis.Options{
